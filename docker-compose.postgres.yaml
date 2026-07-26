@@ -1,0 +1,61 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: fastapi-todo-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
+  migrate:
+    image: milosfaktor/fastapi-todo-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DB_MODE: postgres
+      ENVIRONMENT: postgres
+      SQLALCHEMY_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["uv", "run", "alembic", "upgrade", "head"]
+
+  fastapi:
+    image: milosfaktor/fastapi-todo-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi-todo-app-postgres
+    ports:
+      - "8000:8000"
+    environment:
+      DB_MODE: postgres
+      ENVIRONMENT: postgres
+      SQLALCHEMY_DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+
+
+      
+
+volumes:
+  postgres_data:

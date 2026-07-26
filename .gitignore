@@ -11,5 +11,6 @@ wheels/
 
 .env*
 !.env.sqlite.example
+!.env.docker.postgres.example
 *.db
 /private

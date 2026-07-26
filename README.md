@@ -4,6 +4,11 @@ A full-stack Todo application built with FastAPI, SQLAlchemy, Jinja2 templates, 
 
 This project started as a course-based FastAPI application and was then cleaned up with environment-based configuration, separated SQLAlchemy models and Pydantic schemas, centralized database dependencies, Alembic schema creation, and a focused test suite.
 
+## Quick Links
+
+- [Run locally](#run)
+- [Run with Docker Compose](#docker-compose)
+
 ## Features
 
 - User registration and login
@@ -33,6 +38,7 @@ This project started as a course-based FastAPI application and was then cleaned 
 - JavaScript
 - pytest
 - uv
+- Docker / Docker Compose
 
 ## Project Structure
 
@@ -50,6 +56,8 @@ scripts/
 templates/         # Jinja2 HTML templates
 static/            # CSS and JavaScript
 tests/             # Pytest tests
+Dockerfile         # App image definition
+docker-compose.postgres.yaml
 ```
 
 ## Environment
@@ -70,10 +78,21 @@ Only `.env.sqlite.example` is committed. Real `.env*` files are ignored by Git.
 Example `.env.sqlite.example`:
 
 ```env
-ENVIRONMENT="sqlite_example"
-SQLALCHEMY_DATABASE_URL="sqlite:///./todosapp.example.db"
-SECRET_KEY="replace-with-openssl-rand-hex-32"
-ALGORITHM="HS256"
+ENVIRONMENT=sqlite_example
+SQLALCHEMY_DATABASE_URL=sqlite:///./todosapp.example.db
+SECRET_KEY=replace-with-openssl-rand-hex-32
+ALGORITHM=HS256
+```
+
+Docker Compose uses `.env.docker.postgres.example` by default:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=1234!
+POSTGRES_DB=TodoApplicationDatabase
+ENVIRONMENT=postgres
+SECRET_KEY=replace-with-openssl-rand-hex-32
+ALGORITHM=HS256
 ```
 
 Generate a local secret key with:
@@ -173,15 +192,117 @@ Then open:
 http://127.0.0.1:8000
 ```
 
+## Docker Compose
+
+By default, the Makefile uses:
+
+```bash
+docker compose
+```
+
+If your system uses:
+
+```bash
+docker-compose
+```
+
+pass it as a Makefile variable:
+
+```bash
+make compose-up-build DOCKER_COMPOSE=docker-compose
+make compose-up DOCKER_COMPOSE=docker-compose
+make compose-down DOCKER_COMPOSE=docker-compose
+```
+
+Build and start the app with PostgreSQL:
+
+```bash
+make compose-up-build
+```
+
+This uses:
+
+```text
+docker-compose.postgres.yaml
+.env.docker.postgres.example
+```
+
+The Compose setup starts three services:
+
+```text
+postgres -> migrate -> fastapi
+```
+
+Startup flow:
+
+```text
+1. PostgreSQL starts
+2. PostgreSQL healthcheck waits until the database accepts connections
+3. Alembic migration container runs `alembic upgrade head`
+4. FastAPI starts after migrations finish successfully
+```
+
+The app is available at:
+
+```text
+http://localhost:8000
+```
+
+The Docker PostgreSQL database is exposed on host port `5433`:
+
+```bash
+psql -h localhost -p 5433 -U postgres -d TodoApplicationDatabase
+```
+
+This keeps it separate from a local PostgreSQL server using `localhost:5432`.
+
+Open a PostgreSQL shell inside the Docker container:
+
+```bash
+make compose-db-shell
+```
+
+Stop containers but keep the database volume:
+
+```bash
+make compose-down
+```
+
+Stop containers and remove the database volume:
+
+```bash
+make compose-down-v
+```
+
+Use `compose-down-v` carefully because it deletes the Docker PostgreSQL data.
+
+For private local Docker values, create your own ignored file:
+
+```bash
+cp .env.docker.postgres.example .env.docker.postgres
+```
+
+Then run:
+
+```bash
+make compose-up-build COMPOSE_ENV_FILE=.env.docker.postgres
+```
+
 ## Makefile Commands
 
 ```bash
-make db-init          # Create tables using scripts/init_db.py
-make db-init-alembic  # Apply Alembic migrations
-make run-app          # Run FastAPI app
-make run-with-dbinit  # Initialize DB with script, then run app
-make run-with-alembic # Apply migrations, then run app
-make test             # Run pytest in verbose mode
+make db-init            # Create tables using scripts/init_db.py
+make db-init-alembic    # Apply Alembic migrations for SQLite example mode
+make run-app            # Run FastAPI app locally
+make run-with-dbinit    # Initialize DB with script, then run app
+make run-with-alembic   # Apply migrations, then run app
+make compose-up-build   # Build and start Docker Compose services
+make compose-up         # Start Docker Compose services
+make compose-up-d       # Start Docker Compose services in detached mode
+make compose-down       # Stop Docker Compose services
+make compose-down-v     # Stop services and remove Docker volumes
+make compose-db-shell   # Open psql inside the Docker Postgres container
+make test               # Run pytest in verbose mode
 ```
 
 ## Tests
@@ -205,9 +326,9 @@ Current test coverage includes auth helpers, todo CRUD endpoints, user endpoints
 - The app uses browser cookies to store the JWT access token.
 - JavaScript in `static/js/base.js` intercepts form submissions and sends API requests with `fetch()`.
 - Bootstrap 4 is stored locally under `static/`.
-- Database files (`*.db`), private env files.
+- Database files (`*.db`), private env files, virtual environments, private notes, and Git metadata are excluded from Docker build context by `.dockerignore`.
+- Real `.env*` files are ignored by Git. Keep secrets out of commits.
 
 ## Future Improvements
 
-- Add Docker / Docker Compose for easier local startup
 - Add screenshots to this README
