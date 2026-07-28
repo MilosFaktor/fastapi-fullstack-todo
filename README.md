@@ -193,6 +193,24 @@ Alembic is preferred for schema history. The manual initializer is kept as a sim
 
 ## Run
 
+First run the database initializer or Alembic migrations, then run the app.
+
+Initialize with Alembic and run:
+
+```bash
+make run-with-alembic
+```
+
+Or:
+
+Initialize with the simple SQLAlchemy script and run:
+
+```bash
+make run-with-dbinit
+```
+
+Any other run.
+
 Start the app:
 
 ```bash
@@ -203,18 +221,6 @@ Or:
 
 ```bash
 make run-app
-```
-
-Initialize with Alembic and run:
-
-```bash
-make run-with-alembic
-```
-
-Initialize with the simple SQLAlchemy script and run:
-
-```bash
-make run-with-dbinit
 ```
 
 Then open:
