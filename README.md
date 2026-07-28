@@ -8,6 +8,37 @@ This project started as a course-based FastAPI application and was then cleaned 
 
 - [Run locally](#run)
 - [Run with Docker Compose](#docker-compose)
+- [Screenshots](#screenshots)
+
+## Screenshots
+
+### Login
+
+![Login page](screenshots/01-login-page.png)
+
+### Register
+
+![Register page](screenshots/02-register-page.png)
+
+### Todo Page
+
+![Todo page](screenshots/03-todo-page.png)
+
+### FastAPI Docs
+
+![FastAPI Swagger docs](screenshots/04-swagger-fastapi-docs.png)
+
+### Docker Logs
+
+![Todo app Docker logs](screenshots/05-todo-app-logs.png)
+
+### Running Containers
+
+![Docker containers running](screenshots/06-docker-ps-containers-running.png)
+
+### PostgreSQL Container Data
+
+![PostgreSQL container shell database data](screenshots/07-postgresql-container-shell-db-data.png)
 
 ## Features
 
@@ -328,7 +359,3 @@ Current test coverage includes auth helpers, todo CRUD endpoints, user endpoints
 - Bootstrap 4 is stored locally under `static/`.
 - Database files (`*.db`), private env files, virtual environments, private notes, and Git metadata are excluded from Docker build context by `.dockerignore`.
 - Real `.env*` files are ignored by Git. Keep secrets out of commits.
-
-## Future Improvements
-
-- Add screenshots to this README
